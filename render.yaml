@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: embedding-builder
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: standard
+    autoDeploy: true
+    healthCheckPath: /healthz
+    numInstances: 1
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetMemoryPercent: 80
+      targetCPUPercent: 80
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_ENVIRONMENT
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      - key: MAX_JOBS_CONCURRENCY
+        value: 2 
