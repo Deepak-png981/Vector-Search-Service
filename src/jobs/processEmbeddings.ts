@@ -43,6 +43,7 @@ const processChunk = async (
         userId,
         startLine: chunk.startLine,
         endLine: chunk.endLine,
+        content: chunk.content,
       },
     };
   } catch (error: unknown) {

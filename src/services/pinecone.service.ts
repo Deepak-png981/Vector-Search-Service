@@ -9,7 +9,8 @@ import {
 import { config } from '../utils/config';
 import logger from '../utils/logger';
 import { PineconeError } from '../types/errors';
-import { VectorMetadata } from '../types';
+import { IndexConfig, SearchParams, VectorMetadata } from '../types';
+import { generateEmbedding } from './openai.service';
 
 const INDEX_DIMENSION = 1536;
 const INDEX_METRIC: CreateIndexRequestMetricEnum = 'cosine';
@@ -18,14 +19,6 @@ const RETRY_DELAY_MS = 5000;
 const BATCH_SIZE = 40;
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-interface IndexConfig {
-  name: string;
-  dimension: number;
-  metric: CreateIndexRequestMetricEnum;
-  cloud: 'aws' | 'gcp' | 'azure';
-  region: string;
-}
 
 const createIndexConfig = (indexName: string): IndexConfig => ({
   name: indexName,
@@ -307,6 +300,41 @@ class PineconeService {
         'Pinecone health check failed',
       );
       return false;
+    }
+  }
+
+  public async search(params: SearchParams) {
+    try {
+      const { query, includeMetadata, includeValues, filter } = params;
+      
+      logger.debug({ 
+        namespace: params.namespace,
+        filter,
+        topK: query.top_k 
+      }, 'Searching Pinecone with params');
+      
+      const vector = await generateEmbedding(query.inputs.text);
+      
+      const namespacedIndex = this.index.namespace(params.namespace);
+      
+      const results = await namespacedIndex.query({
+        vector,
+        topK: query.top_k,
+        includeMetadata,
+        includeValues,
+        filter
+      });
+
+      logger.debug({ 
+        matchCount: results.matches?.length || 0,
+        namespace: params.namespace,
+        usage: results.usage
+      }, 'Search results received');
+
+      return results;
+    } catch (error) {
+      logger.error({ error }, 'Error searching in Pinecone');
+      throw error;
     }
   }
 }
