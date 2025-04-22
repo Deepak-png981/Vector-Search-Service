@@ -4,6 +4,7 @@ import logger from '../utils/logger';
 import mongoService from '../services/mongo.service';
 import gitService from '../services/git.service';
 import { processEmbedding } from '../jobs/processEmbeddings';
+import { ApplicationError } from '../types/errors';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ const embedRequestSchema = Joi.object({
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { error, value } = embedRequestSchema.validate(req.body);
-    
+
     if (error) {
       logger.warn({ error: error.message, body: req.body }, 'Invalid embedding request');
       return res.status(400).json({
@@ -24,9 +25,9 @@ router.post('/', async (req: Request, res: Response) => {
         message: error.message,
       });
     }
-    
+
     const { repoUrl, commit, userId } = value;
-    
+
     if (!gitService.isGitUrl(repoUrl)) {
       logger.warn({ repoUrl }, 'Invalid repository URL format');
       return res.status(400).json({
@@ -34,7 +35,7 @@ router.post('/', async (req: Request, res: Response) => {
         message: 'Invalid repository URL format',
       });
     }
-    
+
     const userExists = await mongoService.userExists(userId);
     if (!userExists) {
       logger.warn({ userId }, 'User not found');
@@ -43,11 +44,11 @@ router.post('/', async (req: Request, res: Response) => {
         message: 'User not found',
       });
     }
-    
+
     const job = await mongoService.createJob(userId, repoUrl, commit);
-    
+
     // Start background processing
-    processEmbedding(job.jobId, repoUrl, userId, commit).catch(error => {
+    processEmbedding(job.jobId, repoUrl, userId, commit).catch((error) => {
       logger.error({ error }, 'Unhandled error in background processing');
     });
 
@@ -56,13 +57,17 @@ router.post('/', async (req: Request, res: Response) => {
       jobId: job.jobId,
       message: 'Embedding job started successfully',
     });
-  } catch (error: any) {
-    logger.error({ 
-      error,
-      errorMessage: error?.message || 'Unknown error processing request',
-      errorStack: error?.stack,
-      body: req.body 
-    }, 'Error processing embedding request');
+  } catch (error: unknown) {
+    const appError = error as ApplicationError;
+    logger.error(
+      {
+        error: appError,
+        errorMessage: appError?.message || 'Unknown error processing request',
+        errorStack: appError?.stack,
+        body: req.body,
+      },
+      'Error processing embedding request',
+    );
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -73,9 +78,9 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/:jobId', async (req: Request, res: Response) => {
   try {
     const { jobId } = req.params;
-    
+
     const job = await mongoService.getJob(jobId);
-    
+
     if (!job) {
       logger.warn({ jobId }, 'Job not found');
       return res.status(404).json({
@@ -83,7 +88,7 @@ router.get('/:jobId', async (req: Request, res: Response) => {
         message: 'Job not found',
       });
     }
-    
+
     return res.status(200).json({
       success: true,
       job: {
@@ -96,13 +101,17 @@ router.get('/:jobId', async (req: Request, res: Response) => {
         error: job.error,
       },
     });
-  } catch (error: any) {
-    logger.error({ 
-      error,
-      errorMessage: error?.message || 'Unknown error fetching job status',
-      errorStack: error?.stack,
-      jobId: req.params.jobId 
-    }, 'Error fetching job status');
+  } catch (error: unknown) {
+    const appError = error as ApplicationError;
+    logger.error(
+      {
+        error: appError,
+        errorMessage: appError?.message || 'Unknown error fetching job status',
+        errorStack: appError?.stack,
+        jobId: req.params.jobId,
+      },
+      'Error fetching job status',
+    );
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -110,4 +119,4 @@ router.get('/:jobId', async (req: Request, res: Response) => {
   }
 });
 
-export default router; 
+export default router;

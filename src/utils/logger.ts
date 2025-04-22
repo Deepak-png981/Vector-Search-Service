@@ -4,14 +4,15 @@ const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
 const logger = pino({
   level: LOG_LEVEL,
-  transport: process.env.NODE_ENV !== 'production'
-    ? {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-        },
-      }
-    : undefined,
+  transport:
+    process.env.NODE_ENV !== 'production'
+      ? {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+          },
+        }
+      : undefined,
   formatters: {
     level: (label) => {
       return { level: label };
@@ -19,4 +20,4 @@ const logger = pino({
   },
 });
 
-export default logger; 
+export default logger;
