@@ -21,11 +21,8 @@ router.get('/', async (_req: Request, res: Response) => {
 
   try {
     health.services.pinecone.connected = await pineconeService.isHealthy();
-    
-    if (
-      health.services.mongo.connected &&
-      health.services.pinecone.connected
-    ) {
+
+    if (health.services.mongo.connected && health.services.pinecone.connected) {
       return res.status(200).json(health);
     } else {
       health.status = 'degraded';
@@ -42,4 +39,4 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 });
 
-export default router; 
+export default router;

@@ -51,9 +51,9 @@ const JobSchema = new Schema<IJob>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const Job = mongoose.model<IJob>('Job', JobSchema);
 
-export default Job; 
+export default Job;

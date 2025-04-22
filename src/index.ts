@@ -24,7 +24,7 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response) => {
   logger.error({ err, _req }, 'Unhandled error');
   res.status(500).json({
     success: false,
@@ -41,23 +41,23 @@ if (!fs.existsSync(tempDir)) {
 const startApp = async (): Promise<void> => {
   try {
     await mongoService.connect();
-    
+
     await pineconeService.init();
-    
+
     const port = config.port;
     app.listen(port, () => {
       logger.info({ port }, 'Embedding Builder microservice started');
     });
-    
+
     const shutdown = async () => {
       logger.info('Shutting down application...');
-      
+
       await mongoService.disconnect();
-      
+
       logger.info('Application shutdown complete');
       process.exit(0);
     };
-    
+
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
   } catch (error) {
@@ -69,4 +69,4 @@ const startApp = async (): Promise<void> => {
 startApp().catch((error) => {
   logger.fatal({ error }, 'Unhandled error during startup');
   process.exit(1);
-}); 
+});
