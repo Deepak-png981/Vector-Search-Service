@@ -6,6 +6,7 @@ import logger from './utils/logger';
 import mongoService from './services/mongo.service';
 import pineconeService from './services/pinecone.service';
 import embedController from './api/embed.controller';
+import queryController from './api/query.controller';
 import healthRouter from './health';
 
 const app = express();
@@ -13,14 +14,14 @@ const app = express();
 app.use(express.json());
 app.use(pinoHttp({ logger }));
 
-app.use('/embed', embedController);
 app.use('/health', healthRouter);
+app.use('/embed', embedController);
+app.use('/query', queryController);
 
 app.get('/', (_req, res) => {
   res.json({
     name: 'embedding-builder',
-    description: 'Microservice for embedding repository code into vector stores',
-    docs: '/docs',
+    description: 'Microservice for embedding repository code into vector stores for Review Raccoon',
   });
 });
 
