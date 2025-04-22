@@ -11,7 +11,7 @@ export interface CodeChunk {
 }
 
 export const shouldProcessFile = (filePath: string): boolean => {
-  const extensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.go', '.c', '.cpp', '.h', '.hpp', '.cs', '.php', '.rb' , '.swift' , '.dart', 'json' , '.yml' , '.html' , '.css'];
+  const extensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.go', '.c', '.cpp', '.h', '.hpp', '.cs', '.php', '.rb', '.swift', '.dart', '.json', '.yml', '.html', '.css'];
   const ext = path.extname(filePath).toLowerCase();
   return extensions.includes(ext);
 };
