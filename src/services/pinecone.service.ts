@@ -1,7 +1,6 @@
 import { 
   Pinecone, 
   RecordMetadata, 
-  ServerlessSpec, 
   IndexList,
   IndexModel
 } from '@pinecone-database/pinecone';
