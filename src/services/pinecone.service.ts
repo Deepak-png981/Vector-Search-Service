@@ -1,4 +1,11 @@
-import { Pinecone, IndexList, IndexModel, QueryResponse, Index, CreateIndexRequestMetricEnum } from '@pinecone-database/pinecone';
+import {
+  Pinecone,
+  IndexList,
+  IndexModel,
+  QueryResponse,
+  Index,
+  CreateIndexRequestMetricEnum,
+} from '@pinecone-database/pinecone';
 import { config } from '../utils/config';
 import logger from '../utils/logger';
 import { PineconeError } from '../types/errors';
@@ -38,7 +45,7 @@ const validateExistingIndex = (description: IndexModel, indexName: string): void
       `Index ${indexName} has dimension ${description.dimension}, expected ${INDEX_DIMENSION}`,
     );
   }
-  
+
   if (description.metric !== INDEX_METRIC) {
     logger.warn(
       { indexName, expected: INDEX_METRIC, found: description.metric },
@@ -47,10 +54,7 @@ const validateExistingIndex = (description: IndexModel, indexName: string): void
   }
 };
 
-const waitForIndexReady = async (
-  client: Pinecone,
-  indexName: string,
-): Promise<void> => {
+const waitForIndexReady = async (client: Pinecone, indexName: string): Promise<void> => {
   for (let retries = 0; retries < MAX_RETRIES; retries++) {
     try {
       const status = await client.describeIndex(indexName);
@@ -70,7 +74,7 @@ const waitForIndexReady = async (
     logger.info({ indexName, retryCount: retries + 1 }, 'Waiting for index to become ready...');
     await delay(RETRY_DELAY_MS);
   }
-  
+
   const error = `Index ${indexName} did not become ready after ${MAX_RETRIES} retries`;
   logger.error({ indexName }, error);
   throw new Error(error);
@@ -93,7 +97,7 @@ const processBatch = async (
   }));
 
   await namespace.upsert(batch);
-  
+
   const progress = Math.round(((startIdx + batch.length) / totalCount) * 100);
   logger.info(
     {
@@ -132,7 +136,7 @@ class PineconeService {
 
   public async init(): Promise<void> {
     const indexName = config.pinecone.indexName;
-    
+
     try {
       const indexesResponse: IndexList = await this.client.listIndexes();
       const indexExists = indexesResponse.indexes?.some((index) => index.name === indexName);
@@ -140,7 +144,7 @@ class PineconeService {
       if (!indexExists) {
         const indexConfig = createIndexConfig(indexName);
         logger.info(indexConfig, 'Index not found, creating new index...');
-        
+
         await this.client.createIndex({
           name: indexConfig.name,
           dimension: indexConfig.dimension,
@@ -203,17 +207,14 @@ class PineconeService {
       for (const [userId, userVectors] of Object.entries(vectorsByUser)) {
         const namespaceName = this.getNamespaceForUser(userId);
         const namespace = this.index.namespace(namespaceName);
-        
-        logger.info({ userId, vectorCount: userVectors.length, namespaceName }, 'Processing vectors for user namespace');
+
+        logger.info(
+          { userId, vectorCount: userVectors.length, namespaceName },
+          'Processing vectors for user namespace',
+        );
 
         for (let i = 0; i < userVectors.length; i += BATCH_SIZE) {
-          await processBatch(
-            namespace,
-            userVectors,
-            i,
-            BATCH_SIZE,
-            userVectors.length,
-          );
+          await processBatch(namespace, userVectors, i, BATCH_SIZE, userVectors.length);
         }
       }
     } catch (error: unknown) {
@@ -272,7 +273,7 @@ class PineconeService {
     try {
       const namespaceName = this.getNamespaceForUser(userId);
       const namespace = this.index.namespace(namespaceName);
-      
+
       await namespace.deleteAll();
       logger.info({ userId, namespaceName }, 'Deleted all vectors for user namespace');
     } catch (error: unknown) {
